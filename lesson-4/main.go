@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
+	"os"
+	"os/signal"
 	"runtime"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 )
 
@@ -30,44 +32,20 @@ func main() {
 	fmt.Println("x =", x)
 
 	// Задание 2
-	sigCh := make(chan string)
-	done := make(chan bool)
-	go func() {
-		defer fmt.Println("Выход из записывающей горутины")
-		sigCh <- "SIG1"
-		time.Sleep(1 * time.Second)
-		sigCh <- "SIG2"
-		time.Sleep(1 * time.Second)
-		rand.Seed(time.Now().Unix())
-		if rand.Float64() > 0.5 {
-			sigCh <- "SIGTERM"
-			time.Sleep(1 * time.Second)
-		}
-		sigCh <- "SIG3"
-		time.Sleep(1 * time.Second)
-		sigCh <- "SIG4"
-		time.Sleep(3 * time.Second)
-		close(sigCh)
-	}()
+	sigCh := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		defer fmt.Println("Выход из читающей горутины")
-		for sig := range sigCh {
-			fmt.Println(sig)
-			if sig == "SIGTERM" {
-				done <- true
-			}
-		}
-		close(done)
+		sig := <-sigCh
+		fmt.Println(sig)
+		done <- true
 	}()
 
-	_, ok := <-done
-	if ok {
-		<-time.After(1 * time.Second)
-		fmt.Println("Выход по таймауту")
-		return
-	}
-
-	fmt.Println("next")
+	fmt.Println("awaiting signal")
+	<-done
+	<-time.After(1 * time.Second)
+	fmt.Println("Exit by timeout")
 
 }
