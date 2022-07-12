@@ -47,5 +47,4 @@ func getAmount(srcFileName, funcName string) (int, error) {
 	})
 
 	return i, nil
-
 }
