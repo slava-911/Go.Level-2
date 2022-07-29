@@ -27,11 +27,7 @@ var (
 	}
 )
 
-// inputDir = `C:\Users\Slava\Desktop\education\GeekBrains courses\Go. Уровень 2 (Борис Стрельчик)\Go.Level-2 backup\lesson8\bigdir`
-// var err error
-
 func TestGetDuplicateFileList(t *testing.T) {
-	// var err error
 	for _, cs := range testCases {
 		cs := cs
 		t.Run(cs.InputDir, func(t *testing.T) {

@@ -1,3 +1,9 @@
+// Package duplicates implements functions to find duplicate files in drectory and its subdirectories.
+//
+// It is possible to remove duplicate files if the appropriate flag is passed.
+//
+// There are two modes: Normal and Concurrent.
+
 package duplicates
 
 import (
@@ -20,6 +26,7 @@ type FileInfo struct {
 var ErrNotExist = errors.New("directory does not exist")
 var gMutex sync.Mutex
 
+// FillAllFileList takes a slice and fills it with all files in a directory and its subdirectories.
 func FillAllFileList(fileList *[]*FileInfo, dirPath string) error {
 	dir, err := os.Open(dirPath)
 	if err != nil {
@@ -41,6 +48,8 @@ func FillAllFileList(fileList *[]*FileInfo, dirPath string) error {
 	return nil
 }
 
+// FillAllFileListConcurrent takes a slice and using concurrent mode fills it with all files
+// in a directory and its subdirectories.
 func FillAllFileListConcurrent(fileList *[]*FileInfo, dirPath string) error {
 	dir, err := os.Open(dirPath)
 	if err != nil {
@@ -78,6 +87,7 @@ func FillAllFileListConcurrent(fileList *[]*FileInfo, dirPath string) error {
 	return nil
 }
 
+// GetAllFileList returns a slice of all files in a directory and its subdirectories.
 func GetAllFileList(dirPath string) ([]*FileInfo, error) {
 	dir, err := os.Open(dirPath)
 	if err != nil {
@@ -105,6 +115,8 @@ func GetAllFileList(dirPath string) ([]*FileInfo, error) {
 	return dirfileList, nil
 }
 
+// GetAllFileListConcurrent using concurrent mode returns a slice of all files
+// in a directory and its subdirectories.
 func GetAllFileListConcurrent(dirPath string) ([]*FileInfo, error) {
 	dir, err := os.Open(dirPath)
 	if err != nil {
@@ -148,6 +160,9 @@ func GetAllFileListConcurrent(dirPath string) ([]*FileInfo, error) {
 	return dirfileList, nil
 }
 
+// GetDuplicateFileList takes directory path and a flag for using parallel mode,
+// and returns a slice of duplicate files and an error if something went wrong.
+// First, a slice of all files is formed, then it is sorted, and then duplicates are searched for in it.
 func GetDuplicateFileList(inputDir string, cMode bool) ([]*FileInfo, error) {
 	if _, err := os.Stat(inputDir); err != nil {
 		if os.IsNotExist(err) {
@@ -175,6 +190,7 @@ func GetDuplicateFileList(inputDir string, cMode bool) ([]*FileInfo, error) {
 	// for _, file := range filesList {
 	// 	fmt.Println(file)
 	// }
+
 	sort.Slice(fList, func(i, j int) bool {
 		return (fList[i].Name < fList[j].Name) ||
 			(fList[i].Name == fList[j].Name && fList[i].Size < fList[j].Size)
@@ -199,6 +215,7 @@ func GetDuplicateFileList(inputDir string, cMode bool) ([]*FileInfo, error) {
 	return duplicateFiles, nil
 }
 
+// RemoveFiles takes a slice of files and removes each one.
 func RemoveFiles(fileList []*FileInfo, cMode bool) error {
 	if cMode {
 		var (
@@ -236,33 +253,3 @@ func RemoveFiles(fileList []*FileInfo, cMode bool) error {
 	}
 	return nil
 }
-
-// func RemoveFilesConcurrent(fileList []*FileInfo) error {
-// 	var (
-// 		// wg   sync.WaitGroup
-// 		eg   errgroup.Group
-// 		pool = make(chan struct{}, runtime.NumCPU())
-// 	)
-// 	for _, file := range fileList {
-// 		pool <- struct{}{}
-// 		// wg.Add(1)
-// 		file := file
-// 		// go func() {
-// 		eg.Go(func() error {
-// 			defer func() {
-// 				// wg.Done()
-// 				<-pool
-// 			}()
-// 			if err := os.Remove(file.Path); err != nil {
-// 				// log.Println(err)
-// 				return err
-// 			}
-// 			return nil
-// 		})
-// 	}
-// 	if err := eg.Wait(); err != nil {
-// 		return err
-// 	}
-// 	// wg.Wait()
-// 	return nil
-// }
